@@ -20,8 +20,8 @@ public class FightingGame {
 
         // 3. 显示创建角色的信息和技能
         System.out.println("角色创建成功！");
-        System.out.println("⭐️ 初始属性：" + player.show());
-        System.out.println("⭐️ 拥有技能：" + player.showSkill());
+        System.out.println("🌟 初始属性：" + player.show());
+        System.out.println("🌟 拥有技能：" + player.showSkill());
 
         // 4. 创建多个敌人列表
         ArrayList<EnemyCharacter> enemyList = new ArrayList<>();
@@ -31,7 +31,7 @@ public class FightingGame {
         enemyList.add(new EnemyCharacter("神秘法师", 70, 25, 58, "火球术"));
 
         // 5. 准备战斗（依次跟多个敌人战斗）
-        int count = 1;  // 战斗的轮数
+        int count = 1;  // 记录当前是跟第几个敌人进行战斗
         int wins = 0;  // 记录胜利了几场
 
         // 战斗开始
@@ -65,7 +65,7 @@ public class FightingGame {
                 System.out.println(getHealthBar(player.name, player.HP, player.maxHP));
                 System.out.println(getHealthBar(enemy.name, enemy.HP, enemy.maxHP));
 
-                // 4. 玩家回合: 选择行动
+                // 4. 玩家回合: 选择行动（1普通攻击 / 2强力攻击 / 3生命汲取）
                 playerTurn(player, enemy);
 
                 // 判断敌人是否被击败
@@ -75,12 +75,110 @@ public class FightingGame {
                     break;
                 }
 
-                System.exit(0);
+                // 5. 敌人回合：选择行动 (50%概率采取普通攻击 / 50%概率采取技能攻击 / 不同的敌人技能不同)
+                enemyTurn(enemy, player);
 
+                // 判断玩家是否被击败
+                if (!player.isAlive()) {
+                    System.out.println("☠️ 你被" + enemy.name + "击败了...");
+                    break;
+                }
+
+                round++;
+            }
+
+            // 6. 跟一个敌人战斗结束之后，玩家胜利（继续战斗） 玩家失败（游戏结束）
+            if (player.isAlive()) {
+                int healHP = r.nextInt(20, 41);
+                player.heal(healHP);
+                System.out.println("💖 战斗结束！你恢复了" + healHP + "点生命值！");
+                System.out.println("🏆 当前胜场: " + wins);
+                System.out.println("-----------------------------------------");
+            }
+
+            // 7. 每胜利三场，人物属性增加
+            if (player.isAlive() && wins > 0 && wins % 3 == 0) {
+                System.out.println("✨ 恭喜！你获得了属性提升！");
+                player.maxHP += 30;
+                player.attack += 5;
+                player.defense += 3;
+                System.out.println("最大生命值 + 30，攻击力 + 5，防御力 + 3");
+                System.out.println("当前属性: " + player.show());
+            }
+
+            // 8. 询问玩家是否继续
+            if (player.isAlive()) {
+                System.out.println("是否继续战斗？(Y/N)");
+                Scanner sc = new Scanner(System.in);
+                String choose = sc.next();
+                if ("y".equalsIgnoreCase(choose)) {
+                    count++;
+                    continue;
+                } else if ("n".equalsIgnoreCase(choose)) {
+                    System.out.println("游戏结束！");
+                    break;
+                } else {
+                    System.out.println("没有这个选项，默认游戏继续～");
+                    count++;
+                    continue;
+                }
             }
 
         }
 
+    }
+
+    // 敌人回合
+    private void enemyTurn(EnemyCharacter enemy, HeroCharacter player) {
+        System.out.println("===== " + enemy.name + "的回合 =====");
+
+        // 敌人采取的攻击手段
+        String action = "普通攻击";
+
+        Random r = new Random();
+        int num = r.nextInt(2);
+        if (num == 1) {
+            action = enemy.skill;
+        }
+
+        // 不同的攻击技术手段: 普通攻击，猛击，快速攻击，防御姿态，火球术
+        switch (action) {
+            case "普通攻击":
+                System.out.println("敌人采取了普通攻击");
+                int damage1 = calculateDamage(enemy.attack, player.defense);
+                System.out.println("⚔️ " + enemy.name + "对你使用了普通攻击, 造成" + damage1 + "点伤害!");
+                player.takeDamage(damage1);
+                break;
+            case "猛击":
+                System.out.println("当前的战士采取了猛击");
+                int damage2 = calculateDamage((int)(enemy.attack * 1.5), player.defense);
+                System.out.println("💥 " + enemy.name + "对你使用了猛击, 造成" + damage2 + "点伤害!");
+                player.takeDamage(damage2);
+                break;
+            case "快速攻击":
+                System.out.println("当前的刺客采取了快速攻击");
+                int damage3 = 0;
+                for (int i = 0; i < 2; i++) {
+                    int temp = calculateDamage(enemy.attack / 2, player.defense);
+                    damage3 += temp;
+                }
+                System.out.println("💫 " + enemy.name + "对你使用了快速攻击, 造成" + damage3 + "点伤害!");
+                player.takeDamage(damage3);
+                break;
+            case "防御姿态":
+                System.out.println("当前的坦克采取了防御姿态");
+                enemy.defending = true;
+                System.out.println("🛡 " + enemy.name + "摆出了防御姿态！");
+                break;
+            case "火球术":
+                System.out.println("当前的法师采取了火球术");
+                int damage4 = calculateDamage((int)(enemy.attack * 1.8), player.defense);
+                System.out.println("🔥 " + enemy.name + "对你使用了火球术, 造成" + damage4 + "点伤害!");
+                player.takeDamage(damage4);
+                break;
+            default:
+                break;
+        }
     }
 
 
@@ -177,7 +275,7 @@ public class FightingGame {
             case "2":
                 if (player.HP > 10) {
                     player.takeDamage(10);
-                    int damage2 = calculateDamage((int)(player.attack * 1.8), enemy.defense);
+                    int damage2 = calculateDamage((int) (player.attack * 1.8), enemy.defense);
                     System.out.println("💥 消耗10HP，你对" + enemy.name + "使用了强力一击，造成" + damage2 + "点伤害！");
                     enemy.takeDamage(damage2);
                 } else {
@@ -207,4 +305,5 @@ public class FightingGame {
         }
         return damage;
     }
+
 }
