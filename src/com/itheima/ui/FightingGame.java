@@ -126,6 +126,12 @@ public class FightingGame {
 
         }
 
+        // 6. 游戏的最终结算
+        System.out.println("=========================");
+        System.out.println("游戏结束！");
+        System.out.println("总胜场数：" + wins);
+        System.out.println("感谢游玩文字版格斗游戏");
+        System.exit(0);
     }
 
     // 敌人回合
