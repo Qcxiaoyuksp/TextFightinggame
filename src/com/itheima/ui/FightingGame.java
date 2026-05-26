@@ -1,5 +1,6 @@
 package com.itheima.ui;
 
+import com.itheima.domain.Consumable;
 import com.itheima.domain.EnemyCharacter;
 import com.itheima.domain.HeroCharacter;
 
@@ -8,6 +9,20 @@ import java.util.Random;
 import java.util.Scanner;
 
 public class FightingGame {
+    
+    // 嘲讽语集合（固定不变）
+    private static final String[] TAUNTS = {
+            "就这？我还没出力你就倒下了。",
+            "勇气可嘉，实力欠佳～",
+            "下次记得带点真本事来。",
+            "连我的衣角都没碰到，真遗憾。",
+            "你败给了空气？不，是败给了自己。",
+            "回家再练五百年吧，小家伙。",
+            "战斗结束得比我预料中还要快……无聊。",
+            "你的墓碑上就写：‘差点就赢了’。",
+            "别哭，地板很凉快，多躺会儿。",
+            "这个战绩够你吹一辈子了——被我击败过。"
+    };
     // 启动游戏
     public void gameStart(String username) {
         // 1. 显示游戏的标题
@@ -22,6 +37,14 @@ public class FightingGame {
         System.out.println("角色创建成功！");
         System.out.println("🌟 初始属性：" + player.show());
         System.out.println("🌟 拥有技能：" + player.showSkill());
+
+        // 回血道具: 桃子加10，煎蛋加20，花酿鸡加30，黑白鲈鱼加40，白玉汤加50
+        ArrayList<Consumable> packageList = new ArrayList<>();
+        packageList.add(new Consumable("桃子", 10));
+        packageList.add(new Consumable("煎蛋", 20));
+        packageList.add(new Consumable("花酿鸡", 30));
+        packageList.add(new Consumable("黑白鲈鱼", 40));
+        packageList.add(new Consumable("白玉汤", 50));
 
         // 4. 创建多个敌人列表
         ArrayList<EnemyCharacter> enemyList = new ArrayList<>();
@@ -63,6 +86,7 @@ public class FightingGame {
                 System.out.println("----------------------------------------");
                 System.out.println("⚔️ 第" + round + "回合开始！");
                 System.out.println(getHealthBar(player.name, player.HP, player.maxHP));
+                System.out.println(getBlueBar(player.name, player.MP, player.maxMP));
                 System.out.println(getHealthBar(enemy.name, enemy.HP, enemy.maxHP));
 
                 // 4. 玩家回合: 选择行动（1普通攻击 / 2强力攻击 / 3生命汲取）
@@ -81,6 +105,11 @@ public class FightingGame {
                 // 判断玩家是否被击败
                 if (!player.isAlive()) {
                     System.out.println("☠️ 你被" + enemy.name + "击败了...");
+                    // 随机输出一句嘲讽的话
+                    Random tr = new Random();
+                    int ti = tr.nextInt(TAUNTS.length);
+                    System.out.println(TAUNTS[ti]);
+
                     break;
                 }
 
@@ -91,7 +120,20 @@ public class FightingGame {
             if (player.isAlive()) {
                 int healHP = r.nextInt(20, 41);
                 player.heal(healHP);
-                System.out.println("💖 战斗结束！你恢复了" + healHP + "点生命值！");
+                int recoverMP = (int) (player.maxMP * 0.3);
+                player.MP = Math.min(player.maxMP, player.MP + recoverMP);
+                System.out.println("💖 战斗结束！你恢复了" + healHP + "点生命值！" + "蓝量恢复30%！");
+
+                // 获取回血道具
+                if (r.nextInt(3) == 0) {
+                    System.out.println("------------------------");
+                    int temp = r.nextInt(packageList.size());
+                    Consumable c = packageList.get(temp);
+                    player.packageList.add(c);
+                    System.out.println("🎁 恭喜获得了道具：" + c.getName() + "，可回血：" + c.getNum());
+                    System.out.println("------------------------");
+                }
+
                 System.out.println("🏆 当前胜场: " + wins);
                 System.out.println("-----------------------------------------");
             }
@@ -102,7 +144,8 @@ public class FightingGame {
                 player.maxHP += 30;
                 player.attack += 5;
                 player.defense += 3;
-                System.out.println("最大生命值 + 30，攻击力 + 5，防御力 + 3");
+                player.maxMP += 10;
+                System.out.println("最大生命值 + 30，攻击力 + 5，防御力 + 3，蓝量 + 10");
                 System.out.println("当前属性: " + player.show());
             }
 
@@ -188,6 +231,13 @@ public class FightingGame {
     }
 
 
+    // 打印蓝条
+    public String getBlueBar(String name, int MP, int maxMP) {
+        String bar = getHealthBar(name, MP, maxMP);
+        return bar.substring(0, bar.length() - 2) + "MP";
+    }
+
+
     // 打印血条
     public String getHealthBar(String name, int HP, int maxHP) {
         int barLength = 20;
@@ -221,11 +271,12 @@ public class FightingGame {
         System.out.println("1. 生命值（每点 + 10HP）");
         System.out.println("2. 攻击力（每点 + 2ATK）");
         System.out.println("3. 防御力（每点 + 1DEF）");
+        System.out.println("4. 蓝条（每点 + 5MP）");
 
         Scanner sc = new Scanner(System.in);
 
-        String[] attributes = {"生命值", "攻击力", "防御力"};
-        int[] values = new int[3];
+        String[] attributes = {"生命值", "攻击力", "防御力", "蓝条"};
+        int[] values = new int[4];
 
         for (int i = 0; i < attributes.length; i++) {
             System.out.println("分配点数到 " + attributes[i] + "(剩余点数：" + points + ")：");
@@ -249,7 +300,8 @@ public class FightingGame {
                 username,
                 100 + values[0] * 10,
                 10 + values[1] * 2,
-                0 + values[2] * 1
+                0 + values[2] * 1,
+                30 + values[3] * 5
         );
 
         // 添加玩家的技能
@@ -267,7 +319,8 @@ public class FightingGame {
         System.out.println("1. 普通攻击");
         System.out.println("2. 强力一击");
         System.out.println("3. 生命汲取");
-        System.out.println("选择行动(1 - 3): ");
+        System.out.println("4. 使用道具");
+        System.out.println("选择行动(1 - 4): ");
         Scanner sc = new Scanner(System.in);
         String choose = sc.next();
         switch (choose) {
@@ -279,24 +332,49 @@ public class FightingGame {
                 enemy.takeDamage(damage1);
                 break;
             case "2":
-                if (player.HP > 10) {
-                    player.takeDamage(10);
+                if (player.MP >= 10) {
+                    player.MP -= 10;
                     int damage2 = calculateDamage((int) (player.attack * 1.8), enemy.defense);
-                    System.out.println("💥 消耗10HP，你对" + enemy.name + "使用了强力一击，造成" + damage2 + "点伤害！");
+                    System.out.println("💥 消耗10MP，你对" + enemy.name + "使用了强力一击，造成" + damage2 + "点伤害！");
                     enemy.takeDamage(damage2);
                 } else {
-                    System.out.println("你的生命值不足，攻击失败～");
+                    System.out.println("你的蓝条不足，强力一击失败～");
                 }
                 break;
             case "3":
-                if (player.HP > 10) {
-                    player.takeDamage(10);
+                if (player.MP >= 10) {
+                    player.MP -= 10;
                     Random r = new Random();
                     int healHP = r.nextInt(21);
                     player.heal(healHP);
-                    System.out.println("❤️ 消耗10HP, 你使用了生命汲取，恢复了" + healHP + "点生命值!");
+                    System.out.println("❤️ 消耗10MP, 你使用了生命汲取，恢复了" + healHP + "点生命值!");
                 } else {
-                    System.out.println("你的生命值不足，恢复生命失败～");
+                    System.out.println("你的蓝条不足，恢复生命失败～");
+                }
+                break;
+            case "4":
+                if (!player.packageList.isEmpty()) {
+                    System.out.print("您的背包中有: ");
+                    for (int i = 0; i < player.packageList.size(); i++) {
+                        System.out.print(player.packageList.get(i).getName() + " ");
+                    }
+                    System.out.println("请选择道具：");
+                    String choosePackage = sc.next();
+                    boolean used = false;
+                    for (int i = 0; i < player.packageList.size(); i++) {
+                        if (choosePackage.equals(player.packageList.get(i).getName())) {
+                            player.heal(player.packageList.get(i).getNum());
+                            System.out.println("使用" + choosePackage + "成功，恢复了" + player.packageList.get(i).getNum() + "点生命值！");
+                            player.packageList.remove(i);
+                            used = true;
+                            break;
+                        }
+                    }
+                    if (!used) {
+                        System.out.println("背包中没有名为“" + choosePackage + "”的道具，本回合未使用道具。");
+                    }
+                } else {
+                    System.out.println("背包为空, 没有道具~");
                 }
                 break;
         }

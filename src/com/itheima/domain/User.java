@@ -8,17 +8,21 @@ public class User {
     private String username;
     private String password;
     private boolean status;
+    private String phone;
+
+
 
     public User() {
         id = createID();
         status = true;
     }
 
-    public User(String username, String password) {
+    public User(String username, String password, String phone) {
         id = createID();
         this.username = username;
         this.password = password;
         status = true;
+        this.phone = phone;
     }
 
     // id用户无法设置，是自动生成的，格式为：heima + 5位随机数字
@@ -66,5 +70,13 @@ public class User {
 
     public void setStatus(boolean status) {
         this.status = status;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
     }
 }
